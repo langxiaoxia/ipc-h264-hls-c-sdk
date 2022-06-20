@@ -5,3 +5,8 @@
 [submodule "3rd/curl"]
 	path = 3rd/curl
 	url = https://github.com/curl/curl
+	tag = curl-7_70_0
+[submodule "3rd/zlib"]
+	path = 3rd/zlib
+	url = https://github.com/madler/zlib
+	tag = v1.2.11

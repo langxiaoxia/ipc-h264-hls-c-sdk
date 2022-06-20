@@ -28,7 +28,7 @@ extern "C" {
 #endif
 #endif /* End of #ifdef __cplusplus */
 
-typedef void (*THREAD_RUN)();
+typedef int (*THREAD_RUN)();
 
 typedef struct s3_hls_thread_s {
     pthread_t thread_id;

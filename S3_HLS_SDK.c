@@ -54,11 +54,12 @@ static char object_key_buffer[S3_HLS_MAX_KEY_LENGTH + 1];
 
 /*
  */
-static void S3_HLS_Upload_Queue_Item() {
+static int S3_HLS_Upload_Queue_Item() {
     SDK_DEBUG("Ready For Upload!\n");
     int32_t ret = sem_wait(&s3_hls_put_send_sem);
 	if(0 != ret) {
 	    SDK_DEBUG("Error Semaphore impared! %d\n", ret);
+        return ret;
 	}
 	
     S3_HLS_BUFFER_PART_CTX part_ctx;
@@ -66,14 +67,14 @@ static void S3_HLS_Upload_Queue_Item() {
 
 	if(S3_HLS_OK != ret) {
 	    SDK_DEBUG("Failed to get item from queue!\n");
-	    return;
+	    return ret;
 	}
 
     struct tm* time_tm = gmtime(&part_ctx.timestamp);
     
     if(0 >= sprintf(object_key_buffer, S3_HLS_TS_OBJECT_KEY_FORMAT, object_prefix ? object_prefix : S3_HLS_SDK_EMPTY_STRING, time_tm->tm_year + 1900, time_tm->tm_mon + 1, time_tm->tm_mday, time_tm->tm_hour, time_tm->tm_min, time_tm->tm_sec)) {
         SDK_DEBUG("Unkown Internal Error!\n");
-        return;
+        return -1;
     }
 
 	SDK_DEBUG("Get Queue Info!\n");
@@ -84,12 +85,12 @@ static void S3_HLS_Upload_Queue_Item() {
 	
 	if(S3_HLS_OK != S3_HLS_Release_Queue(s3_hls_queue_ctx)) {
         SDK_DEBUG("Release Queue Failed!\n");
-	    return;
+	    return -1;
 	}
 
     if(S3_HLS_OK != S3_HLS_Lock_Buffer(s3_hls_buffer_ctx)) {
         SDK_DEBUG("Get Buffer Lock Failed!\n");
-        return;
+        return -1;
     }
     
     SDK_DEBUG("Release Buffer!\n");
@@ -97,8 +98,10 @@ static void S3_HLS_Upload_Queue_Item() {
     
     if(S3_HLS_OK != S3_HLS_Unlock_Buffer(s3_hls_buffer_ctx)) {
         SDK_DEBUG("Get Buffer Unlock Failed!\n");
-        return;
+        return -1;
     }
+
+    return 0;
 }
 
 /*
@@ -189,6 +192,7 @@ int32_t S3_HLS_SDK_Initialize(uint32_t buffer_size, char* region, char* bucket, 
         goto l_finalize_client;
     }
     
+    SDK_DEBUG("Upload Queue Init!\n");
     s3_hls_queue_ctx = S3_HLS_Initialize_Queue();
     if(NULL == s3_hls_queue_ctx) {
         SDK_DEBUG("Upload Queue Init Failed!\n");
@@ -250,7 +254,8 @@ int32_t S3_HLS_SDK_Start_Upload() {
  */
 int32_t S3_HLS_SDK_Finalize() {
     S3_HLS_Flush_Buffer(s3_hls_buffer_ctx);
-    
+
+    sem_post(&s3_hls_put_send_sem); //+by xxlang : avoid dead lock
     S3_HLS_Upload_Thread_Stop(s3_hls_worker_thread);
     
     S3_HLS_Client_Finalize(s3_client);

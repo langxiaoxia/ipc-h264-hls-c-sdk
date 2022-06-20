@@ -184,7 +184,7 @@ int32_t S3_HLS_Get_Item_From_Queue(S3_HLS_QUEUE_CTX* ctx, S3_HLS_BUFFER_PART_CTX
         buffer_ctx->second_part_start = NULL;
         buffer_ctx->second_part_length = 0;
         buffer_ctx->timestamp = 0;
-        return ret; // queue is full
+        return S3_HLS_QUEUE_EMPTY; //*by xxlang : queue is empty
     }
 
     buffer_ctx->first_part_start = ctx->queue[ctx->queue_pos].first_part_start;

@@ -82,7 +82,7 @@
 #define S3_HLS_PES_AUDIO_CODE           0xc0
 
 static uint8_t video_pes_header[20] = { 0x00, 0x00, 0x01, /* 3 bytes start code of PES */
-                                        0xe0, /* Stream type (0xc0) */ 
+                                        0xe0, /* Stream type (0xe0) */ 
                                         0x00, 0x00, /* Packet Length, 0x00, 0x00 for video, data length for audio*/
                                         0x80, 0x80, /* PTS, DTS flags*/
                                         0x05, /* PES Header Data Length 5 for 5 bytes of PTS */
@@ -93,7 +93,7 @@ static uint8_t video_pes_header[20] = { 0x00, 0x00, 0x01, /* 3 bytes start code 
                                       };
 
 static uint8_t audio_pes_header[14] = { 0x00, 0x00, 0x01, /* 3 bytes start code of PES */
-                                        0xe0, /* Stream type (0xc0) */ 
+                                        0xc0, /* Stream type (0xc0) */ 
                                         0x00, 0x00, /* Packet Length, 0x00, 0x00 for video, data length for audio*/
                                         0x80, 0x80, /* PTS, DTS flags*/
                                         0x05, /* PES Header Data Length 5 for 5 bytes of PTS */
@@ -112,7 +112,7 @@ static const uint8_t pat_pmt_interval = 3;
 static S3_HLS_H264E_NALU_TYPE_E seperate_nalu_type = S3_HLS_H264E_NALU_SPS;
 
 static uint8_t seperate_count = 0;
-static const uint8_t seperate_count_interval = 1;
+static const uint8_t seperate_count_interval = 3; //*by xxlang : 1 => 3
 
 static uint8_t first_call = 1;
 
@@ -359,6 +359,13 @@ int32_t S3_HLS_Pes_Write_Audio_Frame(S3_HLS_BUFFER_CTX* buffer_ctx, S3_HLS_FRAME
         return S3_HLS_LOCK_FAILED;
 
     AUDIO_DEBUG("[Pes - Audio] Locked\n");
+
+    if (first_call) { //+by xxlang
+        printf("[Pes - Audio] Still First Call!\n");
+        ret = S3_HLS_INVALID_STATUS;
+        goto l_exit;
+    }
+
     for(uint32_t cnt = 0; cnt < pack->item_count; cnt++) {
         AUDIO_DEBUG("[Pes - Audio] Packet Item %d, %d, %d\n", pack->item_count, pack->items[cnt].first_part_length, pack->items[cnt].second_part_length);
         if(NULL == pack->items[cnt].first_part_start || (NULL == pack->items[cnt].second_part_start && pack->items[cnt].second_part_length != 0)) {

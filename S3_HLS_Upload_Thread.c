@@ -41,8 +41,11 @@ static void S3_HLS_Thread_Loop(void* ctx) {
     
     S3_HLS_THREAD_CTX* thread_ctx = (S3_HLS_THREAD_CTX*)ctx;
     while(!thread_ctx->exit_flag) {
-        printf("Thread Run!\n");
-        thread_ctx->run();
+        THREAD_DEBUG("Thread Run!\n");
+        if (thread_ctx->run()) { //*by xxlang
+            THREAD_DEBUG("Thread Quit!\n");
+            break;
+        }
     }
 }
 
@@ -97,8 +100,8 @@ int32_t S3_HLS_Upload_Thread_Stop(S3_HLS_THREAD_CTX* ctx) {
     if(ctx->exit_flag)
         return S3_HLS_THREAD_ALREADY_STOPPED;
     
-    ctx->exit_flag = 1;
-    
+//    ctx->exit_flag = 1; //-by xxlang
+
     pthread_join(ctx->thread_id, NULL);
     
     free(ctx);

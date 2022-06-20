@@ -151,6 +151,9 @@ int32_t S3_HLS_Clear_Buffer(S3_HLS_BUFFER_CTX* buffer_ctx, S3_HLS_BUFFER_PART_CT
         buffer_ctx->used_length -= (next_start - buffer_ctx->used_start);
     } else if(next_start < buffer_ctx->used_start) {
         buffer_ctx->used_length -= buffer_ctx->total_length - (buffer_ctx->used_start - next_start);
+    } else {
+        printf("Fix Buffer Bug!\n");
+        buffer_ctx->used_length = 0;
     }
     
     buffer_ctx->used_start = next_start;

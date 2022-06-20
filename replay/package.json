@@ -1,0 +1,17 @@
+{
+  "name": "hls_replay",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "electron .",
+    "start-log": "electron . --enable-logging --v=0",
+    "start-logm": "electron . --enable-logging --vmodule=*/webrtc/*=1"
+  },
+  "keywords": [],
+  "author": "xxlang",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^13.1.4"
+  }
+}

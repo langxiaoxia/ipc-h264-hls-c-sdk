@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>HLS Replay</title>
+</head>
+<body>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1"></script>
+  <!-- Or if you want the latest version from the main branch -->
+  <!-- <script src="https://cdn.jsdelivr.net/npm/hls.js@canary"></script> -->
+  <video id="my_video" controls></video>
+  <script>
+    var video = document.getElementById('my_video');
+    // var videoSrc = 'https://24vspio6m5.execute-api.us-east-1.amazonaws.com/replay.m3u8?camera_id=demo&start=2022-06-16 08:43:00&end=2022-06-16 08:53:00';
+    var videoSrc = 'https://24vspio6m5.execute-api.us-east-1.amazonaws.com/replay.m3u8?camera_id=demo&start=2022-06-16 09:34:00&end=2022-06-16 09:44:00';
+    //
+    // First check for native browser HLS support
+    //
+    if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      console.log('native browser HLS is supported!');
+      video.src = videoSrc;
+      //
+      // If no native HLS support, check if HLS.js is supported
+      //
+    } else if (Hls.isSupported()) {
+      console.log('HLS.js is supported!');
+      var hls = new Hls();
+      hls.loadSource(videoSrc);
+      hls.attachMedia(video);
+    } else {
+      console.log('neither native browser HLS nor HLS.js is supported!');
+    }
+  </script>
+</body>
+</html>

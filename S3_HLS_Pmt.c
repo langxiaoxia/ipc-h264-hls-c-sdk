@@ -82,7 +82,7 @@
 #ifdef  S3_HLS_AV_STRAM
 // Video + Audio
 
-#define S3_HLS_AAC
+//#define S3_HLS_AAC
 
 #ifdef  S3_HLS_AAC // AAC
 uint8_t const_pmt[31] = {       0x47, 0x50, 0x00, 0x10, 0x00, 0x02, 0xb0, 0x17, // length 

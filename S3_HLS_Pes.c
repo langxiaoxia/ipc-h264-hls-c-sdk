@@ -360,12 +360,6 @@ int32_t S3_HLS_Pes_Write_Audio_Frame(S3_HLS_BUFFER_CTX* buffer_ctx, S3_HLS_FRAME
 
     AUDIO_DEBUG("[Pes - Audio] Locked\n");
 
-    if (first_call) { //+by xxlang
-        printf("[Pes - Audio] Still First Call!\n");
-        ret = S3_HLS_INVALID_STATUS;
-        goto l_exit;
-    }
-
     for(uint32_t cnt = 0; cnt < pack->item_count; cnt++) {
         AUDIO_DEBUG("[Pes - Audio] Packet Item %d, %d, %d\n", pack->item_count, pack->items[cnt].first_part_length, pack->items[cnt].second_part_length);
         if(NULL == pack->items[cnt].first_part_start || (NULL == pack->items[cnt].second_part_start && pack->items[cnt].second_part_length != 0)) {

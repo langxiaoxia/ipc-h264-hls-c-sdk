@@ -107,8 +107,8 @@ int main(int argc, char *argv[]) {
         if (capture_duration < 1) {
             capture_duration = 1;
         }
-        if (capture_duration > 60) {
-            capture_duration = 60;
+        if (capture_duration > 3600) {
+            capture_duration = 3600;
         }
     }
     if (argc > 2) {
@@ -135,7 +135,6 @@ int main(int argc, char *argv[]) {
         av_log(NULL, AV_LOG_ERROR, "Not found AK/SK!\n");
         return -1;
     }
-    av_log(NULL, AV_LOG_WARNING, "AK=%s, SK=%s\n", s3_ak, s3_sk);
     if (s3_upload_start(s3_ak, s3_sk, upload_video, upload_audio))  {
         goto __ERROR;
     }

@@ -9,7 +9,7 @@
 #include "common.h"
 #include "bitstream.h"
 
-#define S3_HLS_AAC
+//#define S3_HLS_AAC
 
 #ifdef S3_HLS_AAC // AAC
 static const enum AVCodecID audio_encode_id = AV_CODEC_ID_AAC;

@@ -18,6 +18,7 @@ static const enum AVCodecID audio_encode_id = AV_CODEC_ID_MP3;
 #endif
 
 static int pack_num = 1;
+static const int samples_per_pack = 128;
 const enum AVSampleFormat audio_encode_format = AV_SAMPLE_FMT_FLTP;
 
 #define ADTS_HEADER_SIZE 7
@@ -70,7 +71,7 @@ static AVCodecContext* open_audio_encoder(enum AVSampleFormat sample_fmt, int sa
         return NULL;
     }
 
-    pack_num = enc_ctx->frame_size / 64;
+    pack_num = enc_ctx->frame_size / samples_per_pack;
     av_log(NULL, AV_LOG_WARNING, "[codec] %s encoder: channels=%d, sample_rate=%d, frame_size=%d, pack_num=%d\n", avcodec_get_name(audio_encode_id), enc_ctx->channels, enc_ctx->sample_rate, enc_ctx->frame_size, pack_num);
     return enc_ctx;
 }
@@ -160,6 +161,12 @@ void audio_encode_frame(AVPacket *pkt, AV_ENCODE_CALLBACK cb) {
     if (pkt) {
         int nb_samples = 0;
         if (pack_num > 1) {
+            nb_samples = pkt->size / av_get_bytes_per_sample(audio_capture_format);
+            if (nb_samples > samples_per_pack) {
+                av_log(NULL, AV_LOG_ERROR, "[AE] capture samples %d > samples_per_pack %d\n", nb_samples, samples_per_pack);
+                return;
+            }
+
             if (pack_count == 0) {
                 out_frame->pts = pkt->pts;
                 out_frame->pkt_duration = 0;

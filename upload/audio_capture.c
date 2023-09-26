@@ -16,6 +16,8 @@ static pthread_t thread_id;
 static int thread_started = 0;
 
 static AVFormatContext *open_audio_capture() {
+    // arecord -l
+    // card [1]: CAMERA, device [0]: USB Audio ==> hw:[1],[0]
     const char *format_name = "alsa";
     const char *device_name = "hw:1,0";
 
@@ -77,12 +79,13 @@ int audio_capture_start(AV_CAPTURE_CALLBACK cb) {
         goto __ERROR;
     }
 
+    audio_capture_cb = cb;
 	if(0 != pthread_create(&thread_id, NULL, (void*)audio_capture_loop, NULL)) {
+        audio_capture_cb = NULL;
         goto __ERROR;
 	}
 
     thread_started = 1;
-    audio_capture_cb = cb;
     return 0;
 
 __ERROR:

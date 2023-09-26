@@ -17,6 +17,8 @@ static pthread_t thread_id;
 static int thread_started = 0;
 
 static AVFormatContext *open_video_capture() {
+    // sudo apt install v4l-utils
+    // v4l2-ctl --list-devices
     const char *format_name = "v4l2";
     const char *device_name = "/dev/video0";
 

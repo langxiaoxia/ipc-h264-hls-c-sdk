@@ -1,0 +1,4 @@
+*.o
+.vscode/
+linux-aarch64/
+linux-x86_64/

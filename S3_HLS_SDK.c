@@ -16,20 +16,20 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include <pthread.h> 
+#include <pthread.h>
 #include <semaphore.h>
 
 #include "curl/curl.h"
 
 #include "S3_HLS_SDK.h"
-#include "S3_HLS_Return_Code.h" 
+#include "S3_HLS_Return_Code.h"
 #include "S3_HLS_Buffer_Mgr.h"
 #include "S3_HLS_Pes.h"
 #include "S3_HLS_Upload_Thread.h"
 #include "S3_HLS_S3_Put_Client.h"
 #include "S3_HLS_Queue.h"
 
-#define S3_HLS_TS_OBJECT_KEY_FORMAT "%s/%04d/%02d/%02d/%02d/%02d/%02d.ts"
+#define S3_HLS_TS_OBJECT_KEY_FORMAT "/%s/%04d/%02d/%02d/%02d/%02d/%02d.ts"
 
 #define S3_HLS_SDK_EMPTY_STRING ""
 
@@ -61,7 +61,7 @@ static int S3_HLS_Upload_Queue_Item() {
 	    SDK_DEBUG("Error Semaphore impared! %d\n", ret);
         return ret;
 	}
-	
+
     S3_HLS_BUFFER_PART_CTX part_ctx;
     ret = S3_HLS_Get_Item_From_Queue(s3_hls_queue_ctx, &part_ctx);
 
@@ -71,7 +71,7 @@ static int S3_HLS_Upload_Queue_Item() {
 	}
 
     struct tm* time_tm = gmtime(&part_ctx.timestamp);
-    
+
     if(0 >= sprintf(object_key_buffer, S3_HLS_TS_OBJECT_KEY_FORMAT, object_prefix ? object_prefix : S3_HLS_SDK_EMPTY_STRING, time_tm->tm_year + 1900, time_tm->tm_mon + 1, time_tm->tm_mday, time_tm->tm_hour, time_tm->tm_min, time_tm->tm_sec)) {
         SDK_DEBUG("Unkown Internal Error!\n");
         return -1;
@@ -80,9 +80,9 @@ static int S3_HLS_Upload_Queue_Item() {
 	SDK_DEBUG("Get Queue Info!\n");
 	SDK_DEBUG("Queue Info: %p, %d, %p, %d\n", part_ctx.first_part_start, part_ctx.first_part_length, part_ctx.second_part_start, part_ctx.second_part_length);
 	S3_HLS_Client_Upload_Buffer(s3_client, object_key_buffer, part_ctx.first_part_start, part_ctx.first_part_length, part_ctx.second_part_start, part_ctx.second_part_length);
-	
+
 	SDK_DEBUG("Upload Complete, Clear Queue Buffer!\n");
-	
+
 	if(S3_HLS_OK != S3_HLS_Release_Queue(s3_hls_queue_ctx)) {
         SDK_DEBUG("Release Queue Failed!\n");
 	    return -1;
@@ -92,10 +92,10 @@ static int S3_HLS_Upload_Queue_Item() {
         SDK_DEBUG("Get Buffer Lock Failed!\n");
         return -1;
     }
-    
+
     SDK_DEBUG("Release Buffer!\n");
     S3_HLS_Clear_Buffer(s3_hls_buffer_ctx, &part_ctx);
-    
+
     if(S3_HLS_OK != S3_HLS_Unlock_Buffer(s3_hls_buffer_ctx)) {
         SDK_DEBUG("Get Buffer Unlock Failed!\n");
         return -1;
@@ -112,7 +112,7 @@ static void  S3_HLS_Add_Buffer_To_Queue(S3_HLS_BUFFER_PART_CTX* ctx) {
         SDK_DEBUG("Invalid CTX!\n");
         return;
     }
-    
+
     if(NULL == ctx->first_part_start && 0 != ctx->first_part_length) {
         SDK_DEBUG("Invalid First Part!\n");
         return;
@@ -122,12 +122,12 @@ static void  S3_HLS_Add_Buffer_To_Queue(S3_HLS_BUFFER_PART_CTX* ctx) {
         SDK_DEBUG("Invalid Second Part!\n");
         return;
     }
-        
+
     if(0 == ctx->first_part_length + ctx->second_part_length) {
         SDK_DEBUG("Empty Part!\n");
         return;
     }
-    
+
     int32_t ret = S3_HLS_Add_To_Queue(s3_hls_queue_ctx, ctx->first_part_start, ctx->first_part_length, ctx->second_part_start, ctx->second_part_length, ctx->timestamp);
     if(0 != ret) {
         // unknown error
@@ -156,27 +156,27 @@ static void  S3_HLS_Add_Buffer_To_Queue(S3_HLS_BUFFER_PART_CTX* ctx) {
  */
 int32_t S3_HLS_SDK_Initialize(uint32_t buffer_size, char* region, char* bucket, char* prefix, char* endpint) {
     SDK_DEBUG("SDK Init!\n");
-    
+
     CURLcode res = curl_global_init(CURL_GLOBAL_DEFAULT);
-    
-    /* Check for errors */ 
+
+    /* Check for errors */
     if(res != CURLE_OK) {
         SDK_DEBUG("CURL Init Failed!\n");
         goto l_cleanup_curl;
     }
-    
+
     if(0 !=sem_init(&s3_hls_put_send_sem, 0 ,0)) {
         SDK_DEBUG("Semaphore Init Failed!\n");
         goto l_cleanup_curl;
     }
-    
+
     SDK_DEBUG("SDK Buffer Init!\n");
     s3_hls_buffer_ctx = S3_HLS_Initialize_Buffer(buffer_size, S3_HLS_Add_Buffer_To_Queue);
     if(NULL == s3_hls_buffer_ctx) {
         SDK_DEBUG("Buffer Init Failed!\n");
         goto l_cleanup_curl;
     }
-        
+
     SDK_DEBUG("SDK S3 Client Init!\n");
     // initialize S3 upload process
     s3_client = S3_HLS_Client_Initialize(region, bucket, endpint);
@@ -184,14 +184,14 @@ int32_t S3_HLS_SDK_Initialize(uint32_t buffer_size, char* region, char* bucket, 
         SDK_DEBUG("S3 Client Init Failed!\n");
         goto l_finalize_buffer;
     }
-    
+
     SDK_DEBUG("Upload Thread Init!\n");
     s3_hls_worker_thread = S3_HLS_Upload_Thread_Initialize(S3_HLS_Upload_Queue_Item);
     if(NULL == s3_hls_worker_thread) {
         SDK_DEBUG("Upload Thread Init Failed!\n");
         goto l_finalize_client;
     }
-    
+
     SDK_DEBUG("Upload Queue Init!\n");
     s3_hls_queue_ctx = S3_HLS_Initialize_Queue();
     if(NULL == s3_hls_queue_ctx) {
@@ -203,7 +203,7 @@ int32_t S3_HLS_SDK_Initialize(uint32_t buffer_size, char* region, char* bucket, 
 
     SDK_DEBUG("SDK Init Finished!\n");
     return S3_HLS_OK;
-    
+
 l_finalize_client:
     S3_HLS_Client_Finalize(s3_client);
     s3_client = NULL;
@@ -211,7 +211,7 @@ l_finalize_client:
 l_finalize_buffer:
     S3_HLS_Finalize_Buffer(s3_hls_buffer_ctx);
     s3_hls_buffer_ctx = NULL;
-    
+
 l_cleanup_curl:
     curl_global_cleanup();
 
@@ -249,7 +249,7 @@ int32_t S3_HLS_SDK_Start_Upload() {
 }
 
 /*
- * Finalize will release resources allocated 
+ * Finalize will release resources allocated
  * Note: Finalize will not free input parameter like ak, sk, token, region, bucket, prefix, endpoint etc.
  */
 int32_t S3_HLS_SDK_Finalize() {
@@ -257,15 +257,15 @@ int32_t S3_HLS_SDK_Finalize() {
 
     sem_post(&s3_hls_put_send_sem); //+by xxlang : avoid dead lock
     S3_HLS_Upload_Thread_Stop(s3_hls_worker_thread);
-    
+
     S3_HLS_Client_Finalize(s3_client);
-    
+
     S3_HLS_Finalize_Buffer(s3_hls_buffer_ctx);
 
-    S3_HLS_Finalize_Queue(s3_hls_queue_ctx);    
+    S3_HLS_Finalize_Queue(s3_hls_queue_ctx);
 
     sem_destroy(&s3_hls_put_send_sem);
-    
+
     curl_global_cleanup();
 
     return S3_HLS_OK;
@@ -273,7 +273,7 @@ int32_t S3_HLS_SDK_Finalize() {
 
 /*
  * User call this method to put video stream into buffer
- * The pack contains an array of H264 frames. 
+ * The pack contains an array of H264 frames.
  * For most of the time, each image pack will contain only one frame
  * But usually SPS/PPS/SEI frames comes together with I frame within a pack
  * In that case, the pack will contains 4 frames

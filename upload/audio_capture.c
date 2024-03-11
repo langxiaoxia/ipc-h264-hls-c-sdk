@@ -19,7 +19,7 @@ static AVFormatContext *open_audio_capture() {
     // arecord -l
     // card [1]: CAMERA, device [0]: USB Audio ==> hw:[1],[0]
     const char *format_name = "alsa";
-    const char *device_name = "hw:1,0";
+    const char *device_name = getenv("AWS_UPLOAD_AUDIO_DEVICE"); // "hw:1,0"
 
     AVInputFormat *iformat = av_find_input_format(format_name);
     if (NULL == iformat) {

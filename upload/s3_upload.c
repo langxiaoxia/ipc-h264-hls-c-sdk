@@ -139,14 +139,11 @@ static void packet_queue_flush(PACKET_QUEUE_CTX *ctx) {
 }
 
 // upload
-int s3_upload_start(char *ak, char *sk, int upload_video, int upload_audio) {
+int s3_upload_start(char *ak, char *sk, char *s3_region, char *s3_bucket, char *s3_prefix, int upload_video, int upload_audio) {
     put_video = upload_video;
     put_audio = upload_audio;
 
     const uint32_t s3_buffer_size = 4 * 1024 * 1024;
-    char *s3_region = "us-east-1";
-    char *s3_bucket = "ipc-video-bucket-626676147343-us-east-1";
-    char *s3_prefix = "/demo";
     char *s3_endpoint = NULL;
 
     if (S3_HLS_OK != S3_HLS_SDK_Initialize(s3_buffer_size, s3_region, s3_bucket, s3_prefix, s3_endpoint) ) {

@@ -20,7 +20,7 @@ static AVFormatContext *open_video_capture() {
     // sudo apt install v4l-utils
     // v4l2-ctl --list-devices
     const char *format_name = "v4l2";
-    const char *device_name = "/dev/video0";
+    const char *device_name = getenv("AWS_UPLOAD_VIDEO_DEVICE"); // "/dev/video0"
 
     AVInputFormat *iformat = av_find_input_format(format_name);
     if (NULL == iformat) {

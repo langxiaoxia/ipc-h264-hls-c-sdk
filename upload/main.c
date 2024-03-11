@@ -129,13 +129,22 @@ int main(int argc, char *argv[]) {
     absolute_start_time = av_gettime();
 
     // s3 init
-    char *s3_ak = getenv("AWS_S3_AK");
-    char *s3_sk = getenv("AWS_S3_SK");
+    char *s3_ak = getenv("AWS_ACCESS_KEY_ID");
+    char *s3_sk = getenv("AWS_SECRET_ACCESS_KEY");
     if (!s3_ak || !s3_sk) {
         av_log(NULL, AV_LOG_ERROR, "Not found AK/SK!\n");
         return -1;
     }
-    if (s3_upload_start(s3_ak, s3_sk, upload_video, upload_audio))  {
+
+    char *s3_region = getenv("AWS_S3_REGION");
+    char *s3_bucket = getenv("AWS_S3_BUCKET");
+    char *s3_prefix = getenv("AWS_S3_PREFIX");
+    if (!s3_region || !s3_bucket || !s3_prefix) {
+        av_log(NULL, AV_LOG_ERROR, "Not found REGION/BUCKET/PREFIX!\n");
+        return -1;
+    }
+
+    if (s3_upload_start(s3_ak, s3_sk, s3_region, s3_bucket, s3_prefix, upload_video, upload_audio))  {
         goto __ERROR;
     }
 

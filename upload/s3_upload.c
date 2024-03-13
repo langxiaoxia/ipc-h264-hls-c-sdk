@@ -17,7 +17,7 @@ static int64_t video_count = 0;
 static int64_t audio_count = 0;
 
 // packet queue
-#define MAX_PACKET_QUEUE_LENGTH 100
+#define MAX_PACKET_QUEUE_LENGTH (50 * 3) // 3s
 
 typedef struct packet_queue_s {
     AVPacket *queue[MAX_PACKET_QUEUE_LENGTH];
@@ -259,9 +259,11 @@ void s3_upload_audio(AVPacket *pkt) {
         return;
     }
 
+    // Upload packets in the queue.
     process_audio_queue();
 
-    if (!video_uploaded || !packet_queue_empty(audio_queue_ctx)) { // need push to queue
+    // Push this packet to the queue if need wait.
+    if (!video_uploaded || !packet_queue_empty(audio_queue_ctx)) {
         if (packet_queue_full(audio_queue_ctx)) {
             av_log(NULL, AV_LOG_WARNING, "[sync] audio packet queue is full\n");
             return;
@@ -272,5 +274,6 @@ void s3_upload_audio(AVPacket *pkt) {
         return;
     }
 
+    // Upload this packet immediately if need not wait.
     s3_upload_audio_internal(pkt);
 }

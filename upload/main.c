@@ -13,13 +13,13 @@ int64_t relative_start_time = 0;
 int64_t absolute_start_time = 0;
 
 // configs
-static int capture_duration = 1; // seconds
+static int capture_duration = 0; // seconds, 0 for infinite
 static int capture_video = 1;
 static int capture_audio = 1;
 static int encode_video = 1;
 static int encode_audio = 1;
-static int upload_video = 0;
-static int upload_audio = 0;
+static int upload_video = 1;
+static int upload_audio = 1;
 
 // flags
 static volatile int video_captured = 0;
@@ -29,7 +29,7 @@ static int wait_video_capture() {
 }
 
 static int capture_enough(int64_t duration) {
-    return duration >= capture_duration * AV_TIME_BASE;
+    return capture_duration && duration >= capture_duration * AV_TIME_BASE;
 }
 
 static int video_capture_callback(AVPacket *pkt) {
@@ -104,11 +104,8 @@ int main(int argc, char *argv[]) {
     // command line: capture_duration upload_video upload_audio
     if (argc > 1) {
         capture_duration = atoi(argv[1]);
-        if (capture_duration < 1) {
-            capture_duration = 1;
-        }
-        if (capture_duration > 3600) {
-            capture_duration = 3600;
+        if (capture_duration < 0) {
+            capture_duration = 0;
         }
     }
     if (argc > 2) {

@@ -18,7 +18,7 @@ FFMPEG_STATIC=\
 FFMPEG_DYNAMIC=-lavdevice -lswscale -lswresample -lavformat -lavcodec -lavutil
 
 #CFLAGS=-Wall -g -O2 -I../ $(FFMPEG_INC)
-CFLAGS=-Wall -g -O2 -I../
+CFLAGS=-Wall -g -O0 -I../
 LIBS=\
 	../$(BUILD_TARGET)/s3_hls.a \
 	../3rd/curl/$(BUILD_TARGET)/lib/libcurl.a \

@@ -41,7 +41,11 @@
 #define S3_HLS_TAG_HEADER_IN_CANONICAL_REQUEST              ";x-amz-tagging"
 #define S3_HLS_TAG_HEADER_FORMAT                            "x-amz-tagging:%s"
 
-#define S3_HLS_AUTHENTICATION_HEADER_FORMAT                 "Authorization:AWS4-HMAC-SHA256 Credential=%s/%s/%s/s3/aws4_request,SignedHeaders=host;range;x-amz-content-sha256;x-amz-date%s%s,Signature=%s" // ak, date in yyyyMMdd, region, optional token heade, signature hex string
+//+by xxlang : x-amz-meta-seq
+#define S3_HLS_SEQ_HEADER_IN_CANONICAL_REQUEST              ";x-amz-meta-seq"
+#define S3_HLS_SEQ_HEADER_FORMAT                            "x-amz-meta-seq:%lu"
+
+#define S3_HLS_AUTHENTICATION_HEADER_FORMAT                 "Authorization:AWS4-HMAC-SHA256 Credential=%s/%s/%s/s3/aws4_request,SignedHeaders=host;range;x-amz-content-sha256;x-amz-date%s%s%s,Signature=%s" // ak, date in yyyyMMdd, region, optional token heade, signature hex string
 
 #define S3_HLS_SECRET_ACCESS_KEY_FORMAT                     "AWS4%s" // sk
 
@@ -395,6 +399,7 @@ int32_t S3_HLS_Client_Set_Credential(S3_HLS_CLIENT_CTX* ctx, char* ak, char* sk,
                                                 ctx->region, 
                                                 S3_HLS_TOKEN_HEADER_IN_CANONICAL_REQUEST, 
                                                 S3_HLS_TAG_HEADER_IN_CANONICAL_REQUEST,
+                                                S3_HLS_SEQ_HEADER_IN_CANONICAL_REQUEST,
                                                 S3_HLS_EMPTY_STRING
                                             );
     if(0 >= auth_header_length) {
@@ -522,7 +527,7 @@ l_unlock:
     return ret;
 }
 
-static int32_t S3_HLS_Hash_Put_Canonical_Request(S3_HLS_CLIENT_CTX* ctx, char* object_key, S3_SHA256_HASH result) {
+static int32_t S3_HLS_Hash_Put_Canonical_Request(S3_HLS_CLIENT_CTX* ctx, char* object_key, S3_SHA256_HASH result, uint64_t seq) {
     S3_SHA256_CTX sha256_ctx;
     S3_SHA256_Init(&sha256_ctx);
 
@@ -590,6 +595,12 @@ static int32_t S3_HLS_Hash_Put_Canonical_Request(S3_HLS_CLIENT_CTX* ctx, char* o
         S3_SHA256_Update(&sha256_ctx, S3_HLS_CANONICAL_REQUEST_NEW_LINE, strlen(S3_HLS_CANONICAL_REQUEST_NEW_LINE));
     }
 
+    //+by xxlang : x-amz-meta-seq
+    char seq_header[128];
+    sprintf(seq_header, S3_HLS_SEQ_HEADER_FORMAT, seq);
+    S3_SHA256_Update(&sha256_ctx, seq_header, strlen(seq_header));
+    S3_SHA256_Update(&sha256_ctx, S3_HLS_CANONICAL_REQUEST_NEW_LINE, strlen(S3_HLS_CANONICAL_REQUEST_NEW_LINE));
+
     // Headers End
     PUT_DEBUG("%s", S3_HLS_CANONICAL_REQUEST_NEW_LINE);
     S3_SHA256_Update(&sha256_ctx, S3_HLS_CANONICAL_REQUEST_NEW_LINE, strlen(S3_HLS_CANONICAL_REQUEST_NEW_LINE));
@@ -607,7 +618,10 @@ static int32_t S3_HLS_Hash_Put_Canonical_Request(S3_HLS_CLIENT_CTX* ctx, char* o
         PUT_DEBUG("%s", S3_HLS_TAG_HEADER_IN_CANONICAL_REQUEST);
         S3_SHA256_Update(&sha256_ctx, S3_HLS_TAG_HEADER_IN_CANONICAL_REQUEST, strlen(S3_HLS_TAG_HEADER_IN_CANONICAL_REQUEST));
     }
-    
+
+    //+by xxlang : x-amz-meta-seq
+    S3_SHA256_Update(&sha256_ctx, S3_HLS_SEQ_HEADER_IN_CANONICAL_REQUEST, strlen(S3_HLS_SEQ_HEADER_IN_CANONICAL_REQUEST));
+
     // Signed Headers Finished
     PUT_DEBUG("%s", S3_HLS_CANONICAL_REQUEST_NEW_LINE);
     S3_SHA256_Update(&sha256_ctx, S3_HLS_CANONICAL_REQUEST_NEW_LINE, strlen(S3_HLS_CANONICAL_REQUEST_NEW_LINE));
@@ -622,6 +636,7 @@ static int32_t S3_HLS_Hash_Put_Canonical_Request(S3_HLS_CLIENT_CTX* ctx, char* o
 }
 
 int32_t S3_HLS_Client_Upload_Buffer(S3_HLS_CLIENT_CTX* ctx, char* object_key, uint8_t* first_data, uint32_t first_length, uint8_t* second_data, uint32_t second_length) {
+    static uint64_t s_seq = 0; //+by xxlang : x-amz-meta-seq
     uint8_t retry_flag = 0;
 
     PUT_DEBUG("Upload start!\n");
@@ -676,7 +691,7 @@ int32_t S3_HLS_Client_Upload_Buffer(S3_HLS_CLIENT_CTX* ctx, char* object_key, ui
         return S3_HLS_UNKNOWN_INTERNAL_ERROR;
 
     S3_SHA256_HASH canonical_hash;
-    S3_HLS_Hash_Put_Canonical_Request(ctx, object_key, canonical_hash);
+    S3_HLS_Hash_Put_Canonical_Request(ctx, object_key, canonical_hash, s_seq);
 
     char canonical_hash_string[S3_HLS_HEX_HASH_STIRNG_LENGTH + 1];
     for(uint8_t i = 0; i < S3_SHA256_DIGEST_LENGTH; i++) {
@@ -742,6 +757,7 @@ int32_t S3_HLS_Client_Upload_Buffer(S3_HLS_CLIENT_CTX* ctx, char* object_key, ui
                         ctx->region,
                         NULL != ctx->token_header ? S3_HLS_TOKEN_HEADER_IN_CANONICAL_REQUEST : S3_HLS_EMPTY_STRING,
                         NULL == ctx->tag_header ? S3_HLS_EMPTY_STRING : S3_HLS_TAG_HEADER_IN_CANONICAL_REQUEST,
+                        S3_HLS_SEQ_HEADER_IN_CANONICAL_REQUEST,
                         signature_hash_string
                     );
 
@@ -822,6 +838,11 @@ l_retry_entry:
         headers = curl_slist_append(headers, ctx->tag_header);
     }
 
+    //+by xxlang : x-amz-meta-seq
+    char seq_header[128];
+    sprintf(seq_header, S3_HLS_SEQ_HEADER_FORMAT, s_seq);
+    headers = curl_slist_append(headers, seq_header);
+
     PUT_DEBUG("Auth Header: %s\n", ctx->auth_header);
     headers = curl_slist_append(headers, ctx->auth_header);
 
@@ -857,6 +878,7 @@ l_retry_entry:
         return S3_HLS_UPLOAD_FAILED;
     }
 
+    s_seq++; //+by xxlang : x-amz-meta-seq
     return S3_HLS_OK;
 }
 

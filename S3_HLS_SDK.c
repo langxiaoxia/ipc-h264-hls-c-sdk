@@ -78,7 +78,7 @@ static int S3_HLS_Upload_Queue_Item() {
     }
 
 	SDK_DEBUG("Get Queue Info!\n");
-	SDK_DEBUG("Queue Info: %p, %d, %p, %d\n", part_ctx.first_part_start, part_ctx.first_part_length, part_ctx.second_part_start, part_ctx.second_part_length);
+	SDK_DEBUG("Queue Info: %p, %u, %p, %u\n", part_ctx.first_part_start, part_ctx.first_part_length, part_ctx.second_part_start, part_ctx.second_part_length);
 	S3_HLS_Client_Upload_Buffer(s3_client, object_key_buffer, part_ctx.first_part_start, part_ctx.first_part_length, part_ctx.second_part_start, part_ctx.second_part_length);
 
 	SDK_DEBUG("Upload Complete, Clear Queue Buffer!\n");

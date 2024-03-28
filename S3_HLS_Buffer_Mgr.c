@@ -141,7 +141,7 @@ int32_t S3_HLS_Clear_Buffer(S3_HLS_BUFFER_CTX* buffer_ctx, S3_HLS_BUFFER_PART_CT
         return S3_HLS_INVALID_PARAMETER;
 
     // Only support clear buffer in sequence, not support clear buffer in middle of used buffer
-    printf("Clear Buffer %p, %d, %p, %d\n", part_ctx->first_part_start, part_ctx->first_part_length, part_ctx->second_part_start, part_ctx->second_part_length);
+    printf("Clear Buffer %p, %u, %p, %u\n", part_ctx->first_part_start, part_ctx->first_part_length, part_ctx->second_part_start, part_ctx->second_part_length);
     if(buffer_ctx->used_start != part_ctx->first_part_start) {
         printf("Clear buffer not match start! %p, %p\n", buffer_ctx->used_start, part_ctx->first_part_start);
     }
@@ -153,7 +153,6 @@ int32_t S3_HLS_Clear_Buffer(S3_HLS_BUFFER_CTX* buffer_ctx, S3_HLS_BUFFER_PART_CT
         buffer_ctx->used_length -= buffer_ctx->total_length - (buffer_ctx->used_start - next_start);
     } else {
         printf("Fix Buffer Bug!\n");
-        buffer_ctx->used_length = 0;
     }
     
     buffer_ctx->used_start = next_start;
@@ -163,7 +162,7 @@ int32_t S3_HLS_Clear_Buffer(S3_HLS_BUFFER_CTX* buffer_ctx, S3_HLS_BUFFER_PART_CT
     buffer_ctx->used_length -= release_length;
     buffer_ctx->used_start += release_length;
 */    
-    printf("Buffer Info: %p, %u, %p, %d\n", buffer_ctx->used_start, buffer_ctx->used_length, buffer_ctx->buffer_start, buffer_ctx->total_length);
+    printf("Buffer Info: %p, %u, %p, %u\n", buffer_ctx->used_start, buffer_ctx->used_length, buffer_ctx->buffer_start, buffer_ctx->total_length);
     if(buffer_ctx->used_start >= buffer_ctx->buffer_start + buffer_ctx->total_length) {
         buffer_ctx->used_start -= buffer_ctx->total_length;
     }

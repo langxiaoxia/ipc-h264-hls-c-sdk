@@ -56,7 +56,7 @@ typedef struct frame_packs_s {
  * Note:
  *   These paremeters are not allowed to change after initialized.
  */
-int32_t S3_HLS_SDK_Initialize(uint32_t buffer_size, char* region, char* bucket, char* prefix, char* endpint);
+int32_t S3_HLS_SDK_Initialize(uint32_t buffer_size, char* region, char* bucket, char* prefix, char* endpint, uint64_t seq);
 
 /*
  * Update Credential used to connect to S3

@@ -67,7 +67,9 @@ typedef struct s3_hls_client_s {
     
     char* tag_header;
     uint32_t tag_header_length;
-    
+
+    uint64_t seq; //+by xxlang : x-amz-meta-seq
+
     pthread_mutex_t credential_lock;
 
     CURL* curl;
@@ -76,7 +78,7 @@ typedef struct s3_hls_client_s {
 /*
  *
  */
-S3_HLS_CLIENT_CTX* S3_HLS_Client_Initialize(char* region, char* bucket, char* endpoint);
+S3_HLS_CLIENT_CTX* S3_HLS_Client_Initialize(char* region, char* bucket, char* endpoint, uint64_t seq);
 
 /*
  *

@@ -13,6 +13,7 @@ int64_t relative_start_time = 0;
 int64_t absolute_start_time = 0;
 
 // configs
+static uint64_t last_seq = 0;
 static int capture_duration = 0; // seconds, 0 for infinite
 static int capture_video = 1;
 static int capture_audio = 1;
@@ -101,18 +102,27 @@ static int audio_capture_callback(AVPacket *pkt) {
 }
 
 int main(int argc, char *argv[]) {
-    // command line: capture_duration upload_video upload_audio
+    // command line: last_seq capture_duration upload_video upload_audio
     if (argc > 1) {
-        capture_duration = atoi(argv[1]);
+        last_seq = strtoul(argv[1], NULL, 10);
+        printf("set last seq %lu\n", last_seq);
+    } else {
+        printf("default last seq %lu\n", last_seq);
+    }
+
+    if (argc > 2) {
+        capture_duration = atoi(argv[2]);
         if (capture_duration < 0) {
             capture_duration = 0;
         }
     }
-    if (argc > 2) {
-        upload_video = atoi(argv[2]);
-    }
+
     if (argc > 3) {
-        upload_audio = atoi(argv[3]);
+        upload_video = atoi(argv[3]);
+    }
+
+    if (argc > 4) {
+        upload_audio = atoi(argv[4]);
     }
 
     // av init
@@ -141,7 +151,7 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    if (s3_upload_start(s3_ak, s3_sk, s3_region, s3_bucket, s3_prefix, upload_video, upload_audio))  {
+    if (s3_upload_start(last_seq + 1, s3_ak, s3_sk, s3_region, s3_bucket, s3_prefix, upload_video, upload_audio))  {
         goto __ERROR;
     }
 

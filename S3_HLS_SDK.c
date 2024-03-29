@@ -154,7 +154,7 @@ static void  S3_HLS_Add_Buffer_To_Queue(S3_HLS_BUFFER_PART_CTX* ctx) {
  * Note:
  *   These paremeters are not allowed to change after initialized.
  */
-int32_t S3_HLS_SDK_Initialize(uint32_t buffer_size, char* region, char* bucket, char* prefix, char* endpint) {
+int32_t S3_HLS_SDK_Initialize(uint32_t buffer_size, char* region, char* bucket, char* prefix, char* endpint, uint64_t seq) {
     SDK_DEBUG("SDK Init!\n");
 
     CURLcode res = curl_global_init(CURL_GLOBAL_DEFAULT);
@@ -179,7 +179,7 @@ int32_t S3_HLS_SDK_Initialize(uint32_t buffer_size, char* region, char* bucket, 
 
     SDK_DEBUG("SDK S3 Client Init!\n");
     // initialize S3 upload process
-    s3_client = S3_HLS_Client_Initialize(region, bucket, endpint);
+    s3_client = S3_HLS_Client_Initialize(region, bucket, endpint, seq);
     if(NULL == s3_client) {
         SDK_DEBUG("S3 Client Init Failed!\n");
         goto l_finalize_buffer;

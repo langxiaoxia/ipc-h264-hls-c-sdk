@@ -118,7 +118,7 @@ static size_t S3_HLS_Upload_Data(void *ptr, size_t size, size_t nmemb, void *str
     return bytes_written;
 }                                                                    
 
-S3_HLS_CLIENT_CTX* S3_HLS_Client_Initialize(char* region, char* bucket, char* endpoint) {
+S3_HLS_CLIENT_CTX* S3_HLS_Client_Initialize(char* region, char* bucket, char* endpoint, uint64_t seq) {
     PUT_DEBUG("Initializing S3 Client!\n");
     if(NULL == region || NULL == bucket || strlen(region) < 3) {
         return NULL;
@@ -153,6 +153,8 @@ S3_HLS_CLIENT_CTX* S3_HLS_Client_Initialize(char* region, char* bucket, char* en
     ret->tag_header = NULL;
     ret->tag_header_length = 0;
     
+    ret->seq = seq; //+by xxlang : x-amz-meta-seq
+
     ret->curl = NULL;
     
 /*    ret->curl = curl_easy_init();
@@ -636,7 +638,6 @@ static int32_t S3_HLS_Hash_Put_Canonical_Request(S3_HLS_CLIENT_CTX* ctx, char* o
 }
 
 int32_t S3_HLS_Client_Upload_Buffer(S3_HLS_CLIENT_CTX* ctx, char* object_key, uint8_t* first_data, uint32_t first_length, uint8_t* second_data, uint32_t second_length) {
-    static uint64_t s_seq = 0; //+by xxlang : x-amz-meta-seq
     uint8_t retry_flag = 0;
 
     PUT_DEBUG("Upload start!\n");
@@ -691,7 +692,7 @@ int32_t S3_HLS_Client_Upload_Buffer(S3_HLS_CLIENT_CTX* ctx, char* object_key, ui
         return S3_HLS_UNKNOWN_INTERNAL_ERROR;
 
     S3_SHA256_HASH canonical_hash;
-    S3_HLS_Hash_Put_Canonical_Request(ctx, object_key, canonical_hash, s_seq);
+    S3_HLS_Hash_Put_Canonical_Request(ctx, object_key, canonical_hash, ctx->seq);
 
     char canonical_hash_string[S3_HLS_HEX_HASH_STIRNG_LENGTH + 1];
     for(uint8_t i = 0; i < S3_SHA256_DIGEST_LENGTH; i++) {
@@ -840,7 +841,7 @@ l_retry_entry:
 
     //+by xxlang : x-amz-meta-seq
     char seq_header[128];
-    sprintf(seq_header, S3_HLS_SEQ_HEADER_FORMAT, s_seq);
+    sprintf(seq_header, S3_HLS_SEQ_HEADER_FORMAT, ctx->seq);
     headers = curl_slist_append(headers, seq_header);
 
     PUT_DEBUG("Auth Header: %s\n", ctx->auth_header);
@@ -878,7 +879,7 @@ l_retry_entry:
         return S3_HLS_UPLOAD_FAILED;
     }
 
-    s_seq++; //+by xxlang : x-amz-meta-seq
+    ctx->seq++; //+by xxlang : x-amz-meta-seq
     return S3_HLS_OK;
 }
 

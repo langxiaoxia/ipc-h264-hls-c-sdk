@@ -1,0 +1,2 @@
+aws_on
+./get_last_seq.sh | xargs ./linux-x86_64/s3_upload

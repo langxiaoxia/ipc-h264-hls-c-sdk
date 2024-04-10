@@ -9,14 +9,6 @@
 #include "common.h"
 #include "bitstream.h"
 
-//#define S3_HLS_AAC
-
-#ifdef S3_HLS_AAC // AAC
-static const enum AVCodecID audio_encode_id = AV_CODEC_ID_AAC;
-#else // MP3
-static const enum AVCodecID audio_encode_id = AV_CODEC_ID_MP3;
-#endif
-
 static int pack_num = 1;
 static const int samples_per_pack = 128;
 const enum AVSampleFormat audio_encode_format = AV_SAMPLE_FMT_FLTP;
@@ -32,7 +24,7 @@ static AVFrame *in_frame = NULL;
 static char out_path[256] = "/data/s3_upload/alsa.";
 static FILE *out_file = NULL;
 
-static AVCodecContext* open_audio_encoder(enum AVSampleFormat sample_fmt, int sample_rate, uint64_t channel_layout) {
+static AVCodecContext* open_audio_encoder(enum AVCodecID audio_encode_id, enum AVSampleFormat sample_fmt, int sample_rate, uint64_t channel_layout) {
     AVCodec *codec = avcodec_find_encoder(audio_encode_id);
     if (!codec) {
         av_log(NULL, AV_LOG_ERROR, "[codec] Not found %s encoder!\n", avcodec_get_name(audio_encode_id));
@@ -152,7 +144,7 @@ static int adts_write_frame_header(uint8_t *buf, uint16_t size) {
     return 0;
 }
 
-void audio_encode_frame(AVPacket *pkt, AV_ENCODE_CALLBACK cb) {
+void audio_encode_frame(AVPacket *pkt, enum AVCodecID audio_encode_id, AV_ENCODE_CALLBACK cb) {
     static int64_t encode_count = 0;
     static int pack_count = 0;
 
@@ -254,7 +246,7 @@ void audio_encode_frame(AVPacket *pkt, AV_ENCODE_CALLBACK cb) {
     }
 }
 
-int audio_encode_open() {
+int audio_encode_open(enum AVCodecID audio_encode_id) {
     if (enc_ctx) {
         return 0;
     }
@@ -265,12 +257,12 @@ int audio_encode_open() {
         goto __ERROR;
     }
 
-    enc_ctx = open_audio_encoder(audio_encode_format, A_ENCODE_SAMPLE_RATE, A_ENCODE_CHANNEL_LAYOUT);
+    enc_ctx = open_audio_encoder(audio_encode_id, audio_encode_format, A_ENCODE_SAMPLE_RATE, A_ENCODE_CHANNEL_LAYOUT);
     if (!enc_ctx) {
         goto __ERROR;
     }
 
-    swr_ctx = swr_alloc_set_opts(NULL, 
+    swr_ctx = swr_alloc_set_opts(NULL,
         A_ENCODE_CHANNEL_LAYOUT, audio_encode_format, A_ENCODE_SAMPLE_RATE, // output
         A_CAPTURE_CHANNEL_LAYOUT, audio_capture_format, A_CAPTURE_SAMPLE_RATE, // input
         0, NULL);

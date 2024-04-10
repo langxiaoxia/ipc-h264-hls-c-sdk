@@ -15,7 +15,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
- 
+
 /*
  *. Format:
  *
@@ -35,11 +35,11 @@
  *      0xc1        0b11 (0xC0) - reserved always 0b11, version number - 0b00000 when pmt change add 1, current_next_indicator 0b1 (0x01) when 1 current program map is available
  *      0x00        0x00 section_number fix
  *      0x00        0x00 last_section_number fix
- *      0xe1        0b111 (0xe0) 0x1F (first 5 bits of PID that contains PCR, value is 0x01) 
+ *      0xe1        0b111 (0xe0) 0x1F (first 5 bits of PID that contains PCR, value is 0x01)
  *      0x00        0x00 last 8 bits for PID
  *      0xf0        reserved 0xf0, 4 bits for program_info_length (first 4 bits)
  *      0x00        last 8 bits of program_info_length
- *      0x1b        stream_type, 0x1b for H264 video, 0x0f for ISO13818-7 (AAC LC?), 0x03 for ISO 11172-3 (mp3?) 
+ *      0x1b        stream_type, 0x1b for H264 video, 0x0f for ISO13818-7 (AAC LC?), 0x03 for ISO 11172-3 (mp3?)
  *      0xe1        0xe0 reserved 0x01 first 5 bits of PID
  *      0x00        remaining 8 bits of PID
  *      0xf0        0xf0 reserved 0x00 first 4 bits of es info length
@@ -78,31 +78,26 @@
 
 #define S3_HLS_PMT_HEADER_LENGTH        188
 
-#define S3_HLS_AV_STRAM
-#ifdef  S3_HLS_AV_STRAM
-// Video + Audio
+// Video + Audio AAC
+uint8_t const_pmt_aac[31] = { 0x47, 0x50, 0x00, 0x10, 0x00, 0x02, 0xb0, 0x17, // length
+                              0x00, 0x01, 0xc1, 0x00, 0x00, 0xe1, 0x00, 0xf0, // PCR PID = 0x0100,
+                              0x00, 0x1b, 0xe1, 0x00, 0xf0, 0x00, 0x0f, 0xe1, // PID 0x100 is video, PID 0x101 is audio
+                              0x01, 0xf0, 0x00, 0x2f, 0x44, 0xb9, 0x9b    }; // last 4 bytes are crc
 
-//#define S3_HLS_AAC
+// // Video + Audio MP3? need generate crc
+uint8_t const_pmt_mp3[31] = { 0x47, 0x50, 0x00, 0x10, 0x00, 0x02, 0xb0, 0x17, // length
+                              0x00, 0x01, 0xc1, 0x00, 0x00, 0xe1, 0x00, 0xf0, // PCR PID = 0x0100,
+                              0x00, 0x1b, 0xe1, 0x00, 0xf0, 0x00, 0x03, 0xe1, // PID 0x100 is video, PID 0x101 is audio
+                              0x01, 0xf0, 0x00, 0x4e, 0x59, 0x3d, 0x1e    }; // last 4 bytes are crc
 
-#ifdef  S3_HLS_AAC // AAC
-uint8_t const_pmt[31] = {       0x47, 0x50, 0x00, 0x10, 0x00, 0x02, 0xb0, 0x17, // length 
-                                0x00, 0x01, 0xc1, 0x00, 0x00, 0xe1, 0x00, 0xf0, // PCR PID = 0x0100, 
-                                0x00, 0x1b, 0xe1, 0x00, 0xf0, 0x00, 0x0f, 0xe1, // PID 0x100 is video, PID 0x101 is audio
-                                0x01, 0xf0, 0x00, 0x2f, 0x44, 0xb9, 0x9b    }; // last 4 bytes are crc
-#else   // mp3? need generate crc
-uint8_t const_pmt[31] = {       0x47, 0x50, 0x00, 0x10, 0x00, 0x02, 0xb0, 0x17, // length 
-                                0x00, 0x01, 0xc1, 0x00, 0x00, 0xe1, 0x00, 0xf0, // PCR PID = 0x0100, 
-                                0x00, 0x1b, 0xe1, 0x00, 0xf0, 0x00, 0x03, 0xe1, // PID 0x100 is video, PID 0x101 is audio
-                                0x01, 0xf0, 0x00, 0x4e, 0x59, 0x3d, 0x1e    }; // last 4 bytes are crc
-#endif
-
-#else
 // Video Only
-char const_pmt[26] = {          0x47, 0x50, 0x00, 0x10, 0x00, 0x02, 0xb0, 0x12, // length 
-                                0x00, 0x01, 0xc1, 0x00, 0x00, 0xe1, 0x00, 0xf0, // PCR PID = 0x0100, 
-                                0x00, 0x1b, 0xe1, 0x00, 0xf0, 0x00, 0x15, 0xbd, 
+uint8_t const_pmt_video[26] = { 0x47, 0x50, 0x00, 0x10, 0x00, 0x02, 0xb0, 0x12, // length
+                                0x00, 0x01, 0xc1, 0x00, 0x00, 0xe1, 0x00, 0xf0, // PCR PID = 0x0100,
+                                0x00, 0x1b, 0xe1, 0x00, 0xf0, 0x00, 0x15, 0xbd,
                                 0x4d, 0x56  }; // last 4 bytes are crc
-#endif
+
+uint8_t *const_pmt = const_pmt_video;
+uint32_t pmt_size = sizeof(const_pmt_video);
 
 int8_t m_pmt_counter = 0;
 
@@ -114,11 +109,11 @@ int32_t S3_HLS_H264_PMT_Write_To_Buffer(S3_HLS_BUFFER_CTX* buffer_ctx) {
     const_pmt[S3_HLS_TS_COUNTER_INDEX] |= (m_pmt_counter & 0x0F);
 
     PMT_DEBUG("Put PMT to buffer!\n");
-    ret = S3_HLS_Put_To_Buffer(buffer_ctx, const_pmt, sizeof(const_pmt));
+    ret = S3_HLS_Put_To_Buffer(buffer_ctx, const_pmt, pmt_size);
     if(0 > ret)
         return ret;
 
-    ret = S3_HLS_Put_To_Buffer(buffer_ctx, const_fill_word, S3_HLS_PMT_HEADER_LENGTH - sizeof(const_pmt));
+    ret = S3_HLS_Put_To_Buffer(buffer_ctx, const_fill_word, S3_HLS_PMT_HEADER_LENGTH - pmt_size);
     if(0 > ret)
         return ret;
 
@@ -129,4 +124,24 @@ int32_t S3_HLS_H264_PMT_Write_To_Buffer(S3_HLS_BUFFER_CTX* buffer_ctx) {
 
 void S3_HLS_PMT_Reset_Counter() {
     m_pmt_counter = 0;
+}
+
+void S3_HLS_PMT_Set_Audio(int audio) {
+  switch (audio) {
+    case 1:
+      const_pmt = const_pmt_aac;
+      pmt_size = sizeof(const_pmt_aac);
+      printf("pmt aac\n");
+      break;
+    case 2:
+      const_pmt = const_pmt_mp3;
+      pmt_size = sizeof(const_pmt_mp3);
+      printf("pmt mp3\n");
+      break;
+    default:
+      const_pmt = const_pmt_video;
+      pmt_size = sizeof(const_pmt_video);
+      printf("pmt video\n");
+      break;
+  }
 }

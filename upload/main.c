@@ -14,13 +14,14 @@ int64_t absolute_start_time = 0;
 
 // configs
 static uint64_t last_seq = 0;
-static int capture_duration = 0; // seconds, 0 for infinite
-static int capture_video = 1;
-static int capture_audio = 1;
-static int encode_video = 1;
-static int encode_audio = 1;
-static int upload_video = 1;
-static int upload_audio = 1;
+static enum AVCodecID audio_encode_id = AV_CODEC_ID_NONE;
+static const int capture_duration = 0; // seconds, 0 for infinite
+static const int capture_video = 1;
+static const int capture_audio = 1;
+static const int encode_video = 1;
+static const int encode_audio = 1;
+static const int upload_video = 1;
+static const int upload_audio = 1;
 
 // flags
 static volatile int video_captured = 0;
@@ -86,13 +87,13 @@ static int audio_capture_callback(AVPacket *pkt) {
     pkt->pts -= absolute_start_time;
     pkt->dts = pkt->pts;
     if (encode_audio) {
-        audio_encode_frame(pkt, s3_upload_audio);
+        audio_encode_frame(pkt, audio_encode_id, s3_upload_audio);
     }
 
     duration += pkt->duration;
     if (capture_enough(duration)) {
         if (encode_audio) {
-            audio_encode_frame(NULL, s3_upload_audio);
+            audio_encode_frame(NULL, audio_encode_id, s3_upload_audio);
         }
 
         return 1; // stop capture
@@ -102,27 +103,32 @@ static int audio_capture_callback(AVPacket *pkt) {
 }
 
 int main(int argc, char *argv[]) {
-    // command line: last_seq capture_duration upload_video upload_audio
+    // command line: audio_fmt last_seq
+    int audio_fmt = 0;
     if (argc > 1) {
-        last_seq = strtoul(argv[1], NULL, 10);
-        printf("set last seq %lu\n", last_seq);
-    } else {
-        printf("default last seq %lu\n", last_seq);
-    }
-
-    if (argc > 2) {
-        capture_duration = atoi(argv[2]);
-        if (capture_duration < 0) {
-            capture_duration = 0;
+        audio_fmt = atoi(argv[1]);
+        switch (audio_fmt) {
+          case 1:
+            audio_encode_id = AV_CODEC_ID_AAC;
+            printf("ts with audio aac\n");
+            break;
+          case 2:
+            audio_encode_id = AV_CODEC_ID_MP3;
+            printf("ts with audio mp3\n");
+            break;
+          default:
+            audio_fmt = 0;
+            audio_encode_id = AV_CODEC_ID_NONE;
+            printf("ts without audio\n");
+            break;
         }
     }
 
-    if (argc > 3) {
-        upload_video = atoi(argv[3]);
-    }
-
-    if (argc > 4) {
-        upload_audio = atoi(argv[4]);
+    if (argc > 2) {
+        last_seq = strtoul(argv[2], NULL, 10);
+        printf("set last seq %lu\n", last_seq);
+    } else {
+        printf("default last seq %lu\n", last_seq);
     }
 
     // av init
@@ -151,7 +157,7 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    if (s3_upload_start(last_seq + 1, s3_ak, s3_sk, s3_region, s3_bucket, s3_prefix, upload_video, upload_audio))  {
+    if (s3_upload_start(last_seq + 1, audio_fmt, s3_ak, s3_sk, s3_region, s3_bucket, s3_prefix, upload_video, upload_audio))  {
         goto __ERROR;
     }
 
@@ -167,7 +173,7 @@ int main(int argc, char *argv[]) {
 
     // capture audio
     if (capture_audio) {
-        if (audio_encode_open()) {
+        if (audio_encode_open(audio_encode_id)) {
             goto __ERROR;
         }
         if (audio_capture_start(audio_capture_callback)) {

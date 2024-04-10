@@ -139,15 +139,15 @@ static void packet_queue_flush(PACKET_QUEUE_CTX *ctx) {
 }
 
 // upload
-int s3_upload_start(uint64_t seq, char *ak, char *sk, char *s3_region, char *s3_bucket, char *s3_prefix, int upload_video, int upload_audio) {
-    printf("upload start seq %lu\n", seq);
+int s3_upload_start(uint64_t seq, int audio, char *ak, char *sk, char *s3_region, char *s3_bucket, char *s3_prefix, int upload_video, int upload_audio) {
+    printf("upload start seq=%lu, audio=%d\n", seq, audio);
     put_video = upload_video;
     put_audio = upload_audio;
 
     const uint32_t s3_buffer_size = 4 * 1024 * 1024;
     char *s3_endpoint = NULL;
 
-    if (S3_HLS_OK != S3_HLS_SDK_Initialize(s3_buffer_size, s3_region, s3_bucket, s3_prefix, s3_endpoint, seq) ) {
+    if (S3_HLS_OK != S3_HLS_SDK_Initialize(s3_buffer_size, s3_region, s3_bucket, s3_prefix, s3_endpoint, seq, audio) ) {
         av_log(NULL, AV_LOG_ERROR, "S3_HLS_SDK_Initialize failed!\n");
         goto __ERROR;
     }

@@ -26,14 +26,14 @@
     *buffer++ = 0x80; // 0b10 + 6 bits flags PTS exists but no DTS
     *buffer++ = 0x80; // indicate have pts and no dts
     *buffer++ = 0x05;
-    
+
     // write pts
     *buffer++ = 0x21 | ((m_pts_timestamp >> 29) & 0x0e);
     *buffer++ = (m_pts_timestamp >> 22) & 0xff;
     *buffer++ = 0x01 | ((m_pts_timestamp >> 14) & 0xfe);
     *buffer++ = (m_pts_timestamp >> 7) & 0xff;
     *buffer++ = 0x01 | (m_pts_timestamp & 0xfe);
-    
+
     // means sequence end
     *buffer++ = 0;
     *buffer++ = 0;
@@ -82,24 +82,24 @@
 #define S3_HLS_PES_AUDIO_CODE           0xc0
 
 static uint8_t video_pes_header[20] = { 0x00, 0x00, 0x01, /* 3 bytes start code of PES */
-                                        0xe0, /* Stream type (0xe0) */ 
+                                        0xe0, /* Stream type (0xe0) */
                                         0x00, 0x00, /* Packet Length, 0x00, 0x00 for video, data length for audio*/
                                         0x80, 0x80, /* PTS, DTS flags*/
                                         0x05, /* PES Header Data Length 5 for 5 bytes of PTS */
                                         0x00, 0x00, 0x00, 0x00, 0x00, /* PTS field */
                                         // below only for video
                                         0x00, 0x00, 0x00, 0x01, /* H264 Start Code */
-                                        0x09, 0xF0 /* H264 Sequence End */    
+                                        0x09, 0xF0 /* H264 Sequence End */
                                       };
 
 static uint8_t audio_pes_header[14] = { 0x00, 0x00, 0x01, /* 3 bytes start code of PES */
-                                        0xc0, /* Stream type (0xc0) */ 
+                                        0xc0, /* Stream type (0xc0) */
                                         0x00, 0x00, /* Packet Length, 0x00, 0x00 for video, data length for audio*/
                                         0x80, 0x80, /* PTS, DTS flags*/
                                         0x05, /* PES Header Data Length 5 for 5 bytes of PTS */
                                         0x00, 0x00, 0x00, 0x00, 0x00 /* PTS field */
                                       };
-                            
+
 // every 2 video frame packs may need increase if < 20 FPS
 static uint8_t pcr_count = 0;
 static const uint8_t pcr_count_interval = 2;
@@ -108,7 +108,7 @@ static const uint8_t pcr_count_interval = 2;
 static uint8_t pat_pmt_count = 0;
 static const uint8_t pat_pmt_interval = 3;
 
-// may need to modify according to 
+// may need to modify according to
 static S3_HLS_H264E_NALU_TYPE_E seperate_nalu_type = S3_HLS_H264E_NALU_SPS;
 
 static uint8_t seperate_count = 0;
@@ -120,7 +120,7 @@ static uint8_t has_error = 0;
 
 int32_t S3_HLS_Pes_Write_Video_Pes(S3_HLS_BUFFER_CTX* buffer_ctx, uint64_t input_timestamp) {
     uint64_t timestamp = input_timestamp / 100 * 9 + 63000;
-    
+
     video_pes_header[9] = 0x21 | ((timestamp >> 29) & 0x0e);
     video_pes_header[10] = (timestamp >> 22) & 0xff;
     video_pes_header[11] = 0x01 | ((timestamp >> 14) & 0xfe);
@@ -132,18 +132,18 @@ int32_t S3_HLS_Pes_Write_Video_Pes(S3_HLS_BUFFER_CTX* buffer_ctx, uint64_t input
 
 int32_t S3_HLS_Pes_Write_Audio_Pes(S3_HLS_BUFFER_CTX* buffer_ctx, uint64_t input_timestamp, uint32_t packet_length) {
     packet_length += sizeof(audio_pes_header) - 6;
-    
+
     audio_pes_header[4] = ((packet_length >> 8) & 0xFF);
     audio_pes_header[5] = (packet_length & 0xFF);
 
     uint64_t timestamp = input_timestamp / 100 * 9 + 63000;
-    
+
     audio_pes_header[9] = 0x21 | ((timestamp >> 29) & 0x0e);
     audio_pes_header[10] = (timestamp >> 22) & 0xff;
     audio_pes_header[11] = 0x01 | ((timestamp >> 14) & 0xfe);
     audio_pes_header[12] = (timestamp >> 7) & 0xff;
     audio_pes_header[13] = 0x01 | (timestamp & 0xfe);
-    
+
     return S3_HLS_Put_To_Buffer(buffer_ctx, audio_pes_header, sizeof(audio_pes_header));
 }
 
@@ -153,17 +153,17 @@ int32_t S3_HLS_Pes_Write_Video_Frame(S3_HLS_BUFFER_CTX* buffer_ctx, S3_HLS_FRAME
     uint8_t random_access = S3_HLS_FALSE;
     uint8_t has_pcr = S3_HLS_FALSE;
     uint32_t content_length = 0;
-    
+
     if(0 == pack->item_count) {
         PES_DEBUG("[Pes - Video] Invalid Packet Count!\n");
         return S3_HLS_INVALID_PARAMETER;
     }
-    
+
     if (0 != S3_HLS_Lock_Buffer(buffer_ctx)) {// lock failed
         PES_DEBUG("[Pes - Video] Lock Buffer Failed!\n");
         return S3_HLS_LOCK_FAILED;
     }
-        
+
     if(first_call) {
         PES_DEBUG("[Pes - Video] First Call Flush Buffer!\n");
         S3_HLS_Flush_Buffer(buffer_ctx); // only update last timestamp
@@ -191,14 +191,14 @@ int32_t S3_HLS_Pes_Write_Video_Frame(S3_HLS_BUFFER_CTX* buffer_ctx, S3_HLS_FRAME
                 seperate_count = 0;
                 pat_pmt_count = 0;
             }
-            
+
             seperate_count++;
         }
-        
+
         if(S3_HLS_H264E_NALU_IDR == frame_type) {
             random_access = S3_HLS_TRUE;
         }
-        
+
         content_length += pack->items[cnt].first_part_length + pack->items[cnt].second_part_length;
     }
 
@@ -217,7 +217,7 @@ int32_t S3_HLS_Pes_Write_Video_Frame(S3_HLS_BUFFER_CTX* buffer_ctx, S3_HLS_FRAME
             PES_DEBUG("[Pes - Video] Write PAT Failed!\n");
             goto l_exit;
         }
-        
+
         ret = S3_HLS_H264_PMT_Write_To_Buffer(buffer_ctx);
         if(0 > ret) {
             has_error = 1;
@@ -225,13 +225,13 @@ int32_t S3_HLS_Pes_Write_Video_Frame(S3_HLS_BUFFER_CTX* buffer_ctx, S3_HLS_FRAME
             goto l_exit;
         }
     }
-    
+
     // update counter
     pat_pmt_count++;
     if(pat_pmt_interval == pat_pmt_count) {
         pat_pmt_count = 0;
     }
-    
+
     if(0 == pcr_count) {
         has_pcr = S3_HLS_TRUE;
         pcr_count++;
@@ -239,46 +239,46 @@ int32_t S3_HLS_Pes_Write_Video_Frame(S3_HLS_BUFFER_CTX* buffer_ctx, S3_HLS_FRAME
             pcr_count = 0;
         }
     }
-    
+
     S3_HLS_TS_Set_Pid(S3_HLS_Video_PID);
-    
+
     S3_HLS_TS_Set_Payload_Start();
-    
+
     if(random_access) {
         S3_HLS_TS_Set_Random_Access();
     }
-    
+
     if(has_pcr) {
         S3_HLS_TS_Set_PCR(pack->items[0].timestamp);
     }
-    
+
     S3_HLS_TS_Fill_Remaining_Length(content_length);
 
     PES_DEBUG("[Pes - Video] Write TS Header %d\n", content_length);
     // write TS header
     ret = S3_HLS_TS_Write_To_Buffer(buffer_ctx);
-    
+
     if(0 > ret) { // write error
         has_error = 1;
         goto l_exit;
     }
-    
+
     uint32_t remaining = S3_HLS_TS_PACKET_SIZE - ret;
     PES_DEBUG("[Pes - Video] Remaining Size %d\n", remaining);
-    
+
     // write PES info
     ret = S3_HLS_Pes_Write_Video_Pes(buffer_ctx, pack->items[0].timestamp);
     if(0 > ret) {
         has_error = 1;
         goto l_exit;
     }
-    
+
     remaining -= ret;
     content_length -= ret;
 
     uint32_t packet_index = 0;
     uint32_t packet_pos = 0;
-    
+
     while(content_length > 0) { // have data to send
         PES_DEBUG("[Pes - Video] Remaining Size %d Content Length %d\n", remaining, content_length);
         if(0 == remaining) { // start new ts header
@@ -291,15 +291,15 @@ int32_t S3_HLS_Pes_Write_Video_Frame(S3_HLS_BUFFER_CTX* buffer_ctx, S3_HLS_FRAME
                 has_error = 1;
                 goto l_exit;
             }
-            
+
             remaining = S3_HLS_TS_PACKET_SIZE - ret;
         }
-        
+
         if(remaining > 0) {
             // write data to buffer
             uint8_t* start_pos;
             uint32_t write_length;
-            
+
             if(packet_pos >= pack->items[packet_index].first_part_length) { // writing second part
                 // need to copy from second part
                 start_pos = pack->items[packet_index].second_part_start + (packet_pos - pack->items[packet_index].first_part_length);
@@ -310,22 +310,22 @@ int32_t S3_HLS_Pes_Write_Video_Frame(S3_HLS_BUFFER_CTX* buffer_ctx, S3_HLS_FRAME
                 write_length = remaining < (pack->items[packet_index].first_part_length - packet_pos) ? remaining : (pack->items[packet_index].first_part_length - packet_pos);
                 PES_DEBUG("Write From First Part %d, %d, %d, %d\n", remaining, write_length, pack->items[packet_index].first_part_length, packet_pos);
             }
-            
+
             ret = S3_HLS_Put_To_Buffer(buffer_ctx, start_pos, write_length);
             PES_DEBUG("Write Buffer Ret %d\n", ret);
-            
+
             if(0 > ret) {
                 has_error = 1;
                 goto l_exit;
             }
-            
+
             content_length -= write_length;
             remaining -= write_length;
-            
+
             packet_pos += write_length;
 
             PES_DEBUG("[Pes - Video] After Put: Remaining Size %d Content Length %d Packet Pos %d\n", remaining, content_length, packet_pos);
-            
+
             if(packet_pos == pack->items[packet_index].first_part_length + pack->items[packet_index].second_part_length) {
                 PES_DEBUG("Goto Next Packet Remaining: %d\n", remaining);
                 packet_index++;
@@ -333,11 +333,11 @@ int32_t S3_HLS_Pes_Write_Video_Frame(S3_HLS_BUFFER_CTX* buffer_ctx, S3_HLS_FRAME
             }
         }
     }
-    
+
     S3_HLS_Unlock_Buffer(buffer_ctx);
 
     return S3_HLS_OK;
-    
+
 l_exit:
     S3_HLS_Unlock_Buffer(buffer_ctx);
 
@@ -348,12 +348,12 @@ int32_t S3_HLS_Pes_Write_Audio_Frame(S3_HLS_BUFFER_CTX* buffer_ctx, S3_HLS_FRAME
     int32_t ret = S3_HLS_OK;
 
     uint32_t content_length = 0;
-    
+
     AUDIO_DEBUG("[Pes - Audio] Check Cnt\n");
     if(0 == pack->item_count) {
         return S3_HLS_INVALID_PARAMETER;
     }
-    
+
     AUDIO_DEBUG("[Pes - Audio] Try Lock\n");
     if (0 != S3_HLS_Lock_Buffer(buffer_ctx)) // lock failed
         return S3_HLS_LOCK_FAILED;
@@ -379,9 +379,9 @@ int32_t S3_HLS_Pes_Write_Audio_Frame(S3_HLS_BUFFER_CTX* buffer_ctx, S3_HLS_FRAME
     }
 
     S3_HLS_TS_Set_Pid(S3_HLS_Audio_PID);
-    
+
     S3_HLS_TS_Set_Payload_Start();
-    
+
     S3_HLS_TS_Set_Random_Access();
 
     S3_HLS_TS_Fill_Remaining_Length(content_length);
@@ -389,14 +389,14 @@ int32_t S3_HLS_Pes_Write_Audio_Frame(S3_HLS_BUFFER_CTX* buffer_ctx, S3_HLS_FRAME
     AUDIO_DEBUG("[Pes - Audio] Write TS Header\n");
     // write TS header
     ret = S3_HLS_TS_Write_To_Buffer(buffer_ctx);
-    
+
     if(0 > ret) { // write error
         AUDIO_DEBUG("[Pes - Audio] Write Buffer Failed! %d\n", ret);
         goto l_exit;
     }
-    
+
     uint32_t remaining = S3_HLS_TS_PACKET_SIZE - ret;
-    
+
     AUDIO_DEBUG("[Pes - Audio] Write Audio PES Header, Remaining: %d\n", remaining);
     // write PES info
     ret = S3_HLS_Pes_Write_Audio_Pes(buffer_ctx, pack->items[0].timestamp, content_length - sizeof(audio_pes_header));
@@ -404,13 +404,13 @@ int32_t S3_HLS_Pes_Write_Audio_Frame(S3_HLS_BUFFER_CTX* buffer_ctx, S3_HLS_FRAME
         has_error = 1;
         goto l_exit;
     }
-    
+
     remaining -= ret;
     content_length -= ret;
 
     uint32_t packet_index = 0;
     uint32_t packet_pos = 0;
-    
+
     AUDIO_DEBUG("[Pes - Audio] Write Audio Content\n");
     while(content_length > 0) { // have data to send
         AUDIO_DEBUG("[Pes - Audio] Remaining Size %d Content Length %d\n", remaining, content_length);
@@ -423,15 +423,15 @@ int32_t S3_HLS_Pes_Write_Audio_Frame(S3_HLS_BUFFER_CTX* buffer_ctx, S3_HLS_FRAME
                 AUDIO_DEBUG("[Pes - Audio] Write Buffer Failed 2! %d\n", ret);
                 goto l_exit;
             }
-            
+
             remaining = S3_HLS_TS_PACKET_SIZE - ret;
         }
-        
+
         if(remaining > 0) {
             // write data to buffer
             uint8_t* start_pos;
             uint32_t write_length;
-            
+
             if(packet_pos >= pack->items[packet_index].first_part_length) { // writing second part
                 // need to copy from second part
                 start_pos = pack->items[packet_index].second_part_start + (packet_pos - pack->items[packet_index].first_part_length);
@@ -440,9 +440,9 @@ int32_t S3_HLS_Pes_Write_Audio_Frame(S3_HLS_BUFFER_CTX* buffer_ctx, S3_HLS_FRAME
                 start_pos = pack->items[packet_index].first_part_start + packet_pos;
                 write_length = remaining < (pack->items[packet_index].first_part_length - packet_pos) ? remaining : (pack->items[packet_index].first_part_length - packet_pos);
             }
-            
+
             ret = S3_HLS_Put_To_Buffer(buffer_ctx, start_pos, write_length);
-            
+
             if(0 > ret) {
                 has_error = 1;
                 AUDIO_DEBUG("[Pes - Audio] Write Buffer Failed 3! %d\n", ret);
@@ -451,20 +451,24 @@ int32_t S3_HLS_Pes_Write_Audio_Frame(S3_HLS_BUFFER_CTX* buffer_ctx, S3_HLS_FRAME
 
             content_length -= write_length;
             remaining -= write_length;
-            
+
             packet_pos += write_length;
-            
+
             if(packet_pos == pack->items[packet_index].first_part_length + pack->items[packet_index].second_part_length) {
                 packet_index++;
                 packet_pos = 0;
             }
         }
     }
-    
+
     S3_HLS_Unlock_Buffer(buffer_ctx);
     return S3_HLS_OK;
 
 l_exit:
     S3_HLS_Unlock_Buffer(buffer_ctx);
     return ret;
+}
+
+void S3_HLS_Pes_Set_Audio_Format(int audio) {
+  S3_HLS_PMT_Set_Audio(audio);
 }

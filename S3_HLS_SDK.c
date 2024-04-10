@@ -154,8 +154,9 @@ static void  S3_HLS_Add_Buffer_To_Queue(S3_HLS_BUFFER_PART_CTX* ctx) {
  * Note:
  *   These paremeters are not allowed to change after initialized.
  */
-int32_t S3_HLS_SDK_Initialize(uint32_t buffer_size, char* region, char* bucket, char* prefix, char* endpint, uint64_t seq) {
+int32_t S3_HLS_SDK_Initialize(uint32_t buffer_size, char* region, char* bucket, char* prefix, char* endpint, uint64_t seq, int audio) {
     SDK_DEBUG("SDK Init!\n");
+    S3_HLS_Pes_Set_Audio_Format(audio);
 
     CURLcode res = curl_global_init(CURL_GLOBAL_DEFAULT);
 

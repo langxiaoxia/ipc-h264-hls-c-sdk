@@ -26,7 +26,7 @@ extern const enum AVSampleFormat audio_encode_format;
 #define STR2(x) (STR1(x))
 
 // upload
-extern int s3_upload_start(uint64_t seq, char *ak, char *sk, char *s3_region, char *s3_bucket, char *s3_prefix, int upload_video, int upload_audio);
+extern int s3_upload_start(uint64_t seq, int audio, char *ak, char *sk, char *s3_region, char *s3_bucket, char *s3_prefix, int upload_video, int upload_audio);
 extern void s3_upload_stop();
 extern void s3_upload_video(AVPacket *pkt);
 extern void s3_upload_audio(AVPacket *pkt);
@@ -47,8 +47,8 @@ extern void video_encode_close();
 // audio
 extern int audio_capture_start(AV_CAPTURE_CALLBACK cb);
 extern void audio_capture_stop();
-extern int audio_encode_open();
-extern void audio_encode_frame(AVPacket *pkt, AV_ENCODE_CALLBACK cb);
+extern int audio_encode_open(enum AVCodecID audio_encode_id);
+extern void audio_encode_frame(AVPacket *pkt, enum AVCodecID audio_encode_id, AV_ENCODE_CALLBACK cb);
 extern void audio_encode_close();
 
 #endif // COMMON_H

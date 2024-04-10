@@ -15,8 +15,8 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
- 
- 
+
+
 #ifndef __S3_HLS_SDK_H__
 #define __S3_HLS_SDK_H__
 
@@ -56,7 +56,7 @@ typedef struct frame_packs_s {
  * Note:
  *   These paremeters are not allowed to change after initialized.
  */
-int32_t S3_HLS_SDK_Initialize(uint32_t buffer_size, char* region, char* bucket, char* prefix, char* endpint, uint64_t seq);
+int32_t S3_HLS_SDK_Initialize(uint32_t buffer_size, char* region, char* bucket, char* prefix, char* endpint, uint64_t seq, int audio);
 
 /*
  * Update Credential used to connect to S3
@@ -78,7 +78,7 @@ int32_t S3_HLS_SDK_Set_Credential(char* ak, char* sk, char* token);
 int32_t S3_HLS_SDK_Set_Tag(char* object_tag);
 
 /*
- * Finalize will release resources allocated 
+ * Finalize will release resources allocated
  * Note: Finalize will not free input parameter like ak, sk, token, region, bucket, prefix, endpoint etc.
  */
 int32_t S3_HLS_SDK_Finalize();
@@ -90,7 +90,7 @@ int32_t S3_HLS_SDK_Start_Upload();
 
 /*
  * User call this method to put video stream into buffer
- * The pack contains an array of H264 frames. 
+ * The pack contains an array of H264 frames.
  * For most of the time, each image pack will contain only one frame
  * But usually SPS/PPS/SEI frames comes together with I frame within a pack
  * In that case, the pack will contains 4 frames

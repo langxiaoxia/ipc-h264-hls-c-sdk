@@ -38,6 +38,8 @@ extern "C" {
 int32_t S3_HLS_H264_PMT_Write_To_Buffer();
 void S3_HLS_PMT_Reset_Counter();
 
+void S3_HLS_PMT_Set_Audio();
+
 #ifdef __cplusplus
 #if __cplusplus
 }

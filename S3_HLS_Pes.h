@@ -45,6 +45,8 @@ int32_t S3_HLS_Pes_Write_Video_Frame(S3_HLS_BUFFER_CTX* ctx, S3_HLS_FRAME_PACK* 
  */
 int32_t S3_HLS_Pes_Write_Audio_Frame(S3_HLS_BUFFER_CTX* ctx, S3_HLS_FRAME_PACK* pack);
 
+void S3_HLS_Pes_Set_Audio_Format(int audio);
+
 #ifdef __cplusplus
 #if __cplusplus
 }

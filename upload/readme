@@ -1,2 +1,7 @@
 aws_on
-./get_last_seq.sh | xargs ./linux-x86_64/s3_upload
+
+# aac
+./get_last_seq.sh | xargs ./linux-x86_64/s3_upload 1
+
+# mp3
+./get_last_seq.sh | xargs ./linux-x86_64/s3_upload 2

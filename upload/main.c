@@ -12,9 +12,12 @@
 int64_t relative_start_time = 0;
 int64_t absolute_start_time = 0;
 
-// configs
-static uint64_t last_seq = 0;
+// command line parameters
+static int ts_duration = 1; // seconds
 static enum AVCodecID audio_encode_id = AV_CODEC_ID_NONE;
+static uint64_t last_seq = 0;
+
+// debug options
 static const int capture_duration = 0; // seconds, 0 for infinite
 static const int capture_video = 1;
 static const int capture_audio = 1;
@@ -103,10 +106,20 @@ static int audio_capture_callback(AVPacket *pkt) {
 }
 
 int main(int argc, char *argv[]) {
-    // command line: audio_fmt last_seq
-    int audio_fmt = 0;
+    // command line: video_gop, audio_fmt last_seq
     if (argc > 1) {
-        audio_fmt = atoi(argv[1]);
+        ts_duration = atoi(argv[1]);
+        if (ts_duration < 1) {
+          ts_duration = 1;
+        } else if (ts_duration > 60) {
+          ts_duration = 60;
+        }
+    }
+    printf("ts duration %d(s)\n", ts_duration);
+
+    int audio_fmt = 0;
+    if (argc > 2) {
+        audio_fmt = atoi(argv[2]);
         switch (audio_fmt) {
           case 1:
             audio_encode_id = AV_CODEC_ID_AAC;
@@ -124,8 +137,8 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    if (argc > 2) {
-        last_seq = strtoul(argv[2], NULL, 10);
+    if (argc > 3) {
+        last_seq = strtoul(argv[3], NULL, 10);
         printf("set last seq %lu\n", last_seq);
     } else {
         printf("default last seq %lu\n", last_seq);
@@ -163,7 +176,7 @@ int main(int argc, char *argv[]) {
 
     // capture video
     if (capture_video) {
-        if (video_encode_open()) {
+        if (video_encode_open(ts_duration)) {
             goto __ERROR;
         }
         if (video_capture_start(video_capture_callback)) {

@@ -24,7 +24,7 @@ static FILE *out_file = NULL;
 #define V_HEIGHT 480
 #define V_FPS 30
 
-static AVCodecContext* open_video_encoder(int width, int height, int fps) {
+static AVCodecContext* open_video_encoder(int width, int height, int gop, int fps) {
     AVCodec *codec = avcodec_find_encoder(video_encode_id);
     if (!codec) {
         av_log(NULL, AV_LOG_ERROR, "[codec] Not found %s encoder!\n", avcodec_get_name(video_encode_id));
@@ -56,7 +56,7 @@ static AVCodecContext* open_video_encoder(int width, int height, int fps) {
     enc_ctx->height = height;
 
     // GOP
-    enc_ctx->gop_size = fps; // one key frame per second
+    enc_ctx->gop_size = gop; // frames per ts
     enc_ctx->keyint_min = fps; // option
 
     //设置B帧数据
@@ -202,7 +202,7 @@ void video_encode_frame(AVPacket *pkt, AV_ENCODE_CALLBACK cb) {
     }
 }
 
-int video_encode_open() {
+int video_encode_open(int ts_duration) {
     if (enc_ctx) {
         return 0;
     }
@@ -213,7 +213,7 @@ int video_encode_open() {
         goto __ERROR;
     }
 
-    enc_ctx = open_video_encoder(V_WIDTH, V_HEIGHT, V_FPS);
+    enc_ctx = open_video_encoder(V_WIDTH, V_HEIGHT, ts_duration * V_FPS, V_FPS);
     if (!enc_ctx) {
         goto __ERROR;
     }

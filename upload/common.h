@@ -40,7 +40,7 @@ typedef void (*AV_ENCODE_CALLBACK)(AVPacket *pkt);
 // video
 extern int video_capture_start(AV_CAPTURE_CALLBACK cb);
 extern void video_capture_stop();
-extern int video_encode_open();
+extern int video_encode_open(int ts_duration);
 extern void video_encode_frame(AVPacket *pkt, AV_ENCODE_CALLBACK cb);
 extern void video_encode_close();
 

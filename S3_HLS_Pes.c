@@ -112,7 +112,7 @@ static const uint8_t pat_pmt_interval = 3;
 static S3_HLS_H264E_NALU_TYPE_E seperate_nalu_type = S3_HLS_H264E_NALU_SPS;
 
 static uint8_t seperate_count = 0;
-static const uint8_t seperate_count_interval = 3; //*by xxlang : 1 => 3
+static const uint8_t seperate_count_interval = 1; //@_@ xxlang : seperate ts by key frame
 
 static uint8_t first_call = 1;
 
